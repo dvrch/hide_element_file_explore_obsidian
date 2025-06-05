@@ -1,0 +1,9 @@
+{
+    "id": "hide-element-file-explore-obsidian",
+    "name": "Hide Element File Explorer",
+    "version": "1.0.0",
+    "minAppVersion": "0.15.0",
+    "description": "Un plugin pour cacher des éléments dans l'explorateur de fichiers d'Obsidian",
+    "author": "Votre Nom",
+    "isDesktopOnly": false
+}

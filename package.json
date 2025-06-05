@@ -1,0 +1,20 @@
+{
+    "name": "hide-element-file-explore-obsidian",
+    "version": "1.0.0",
+    "description": "Plugin Obsidian pour cacher des éléments dans l'explorateur de fichiers",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "version": "node version-bump.mjs && git add manifest.json versions.json"
+    },
+    "keywords": ["obsidian", "plugin"],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^16.11.6",
+        "obsidian": "latest",
+        "esbuild": "0.17.3",
+        "typescript": "4.7.4"
+    }
+}
