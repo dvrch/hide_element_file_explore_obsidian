@@ -218,22 +218,42 @@ export default class GitignoreExplorerPlugin extends Plugin {
     }
 
     private normalizePattern(pattern: string): string {
-        // Amélioration de la conversion des patterns .gitignore en regex
-        return `^${pattern
+        // Si c'est un pattern d'extension (*.ext)
+        if (pattern.startsWith('*.')) {
+            const ext = pattern.slice(2);
+            return `.*\\.${ext.replace(/\./g, '\\.')}$`;
+        }
+
+        // Pattern normal
+        let normalized = pattern
             .replace(/\./g, '\\.')
             .replace(/\*\*/g, '.*')
             .replace(/\*/g, '[^/]*')
             .replace(/\?/g, '.')
-            .replace(/\/$/, '')}$`;
+            .replace(/\/$/, '');
+
+        // Si le pattern ne commence pas par /, il peut matcher n'importe où dans le chemin
+        if (!pattern.startsWith('/')) {
+            normalized = `.*${normalized}`;
+        }
+
+        return normalized;
     }
 
     private parseGitignore(content: string): GitignoreRule[] {
         const rules: GitignoreRule[] = [];
         const lines = content.split('\n');
 
+        console.log('[DEBUG] Parsing du fichier .gitignore:');
+        console.log(content);
+        console.log('\n[DEBUG] Règles analysées:');
+
         for (const line of lines) {
             const trimmedLine = line.trim();
-            if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+            if (!trimmedLine || trimmedLine.startsWith('#')) {
+                console.log(`[DEBUG] Ligne ignorée: ${line}`);
+                continue;
+            }
 
             const isInclude = trimmedLine.startsWith('!');
             const pattern = isInclude ? trimmedLine.substring(1) : trimmedLine;
@@ -276,26 +296,36 @@ export default class GitignoreExplorerPlugin extends Plugin {
     private shouldShowItem(path: string, isFile: boolean, isFolder: boolean, rules: GitignoreRule[]): boolean {
         let defaultVisibility = true;
         
+        console.log(`\n[DEBUG] Vérification du fichier: ${path}`);
+        console.log(`[DEBUG] Type: ${isFile ? 'Fichier' : 'Dossier'}`);
+        
         for (const rule of rules) {
             const regex = new RegExp(rule.pattern);
             const matches = regex.test(path);
+            
+            console.log(`[DEBUG] Règle testée: ${rule.pattern}`);
+            console.log(`[DEBUG] Est une règle d'inclusion: ${rule.isInclude}`);
+            console.log(`[DEBUG] Match: ${matches}`);
             
             if (matches) {
                 // Règles d'exclusion
                 if (!rule.isInclude) {
                     if ((isFile && !rule.isFolder) || (isFolder && rule.isFolder)) {
+                        console.log(`[DEBUG] ➡️ Le fichier sera masqué par la règle: ${rule.pattern}`);
                         defaultVisibility = false;
                     }
                 }
                 // Règles d'inclusion
                 else {
                     if ((isFile && !rule.isFolder) || (isFolder && rule.isFolder)) {
+                        console.log(`[DEBUG] ➡️ Le fichier sera inclus par la règle: ${rule.pattern}`);
                         return true;
                     }
                 }
             }
         }
         
+        console.log(`[DEBUG] Visibilité finale: ${defaultVisibility ? 'Visible' : 'Masqué'}\n`);
         return defaultVisibility;
     }
 }
