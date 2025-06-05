@@ -219,15 +219,28 @@ var GitignoreExplorerPlugin = class extends import_obsidian.Plugin {
     });
   }
   normalizePattern(pattern) {
-    return `^${pattern.replace(/\./g, "\\.").replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*").replace(/\?/g, ".").replace(/\/$/, "")}$`;
+    if (pattern.startsWith("*.")) {
+      const ext = pattern.slice(2);
+      return `.*\\.${ext.replace(/\./g, "\\.")}$`;
+    }
+    let normalized = pattern.replace(/\./g, "\\.").replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*").replace(/\?/g, ".").replace(/\/$/, "");
+    if (!pattern.startsWith("/")) {
+      normalized = `.*${normalized}`;
+    }
+    return normalized;
   }
   parseGitignore(content) {
     const rules = [];
     const lines = content.split("\n");
+    console.log("[DEBUG] Parsing du fichier .gitignore:");
+    console.log(content);
+    console.log("\n[DEBUG] R\xE8gles analys\xE9es:");
     for (const line of lines) {
       const trimmedLine = line.trim();
-      if (!trimmedLine || trimmedLine.startsWith("#"))
+      if (!trimmedLine || trimmedLine.startsWith("#")) {
+        console.log(`[DEBUG] Ligne ignor\xE9e: ${line}`);
         continue;
+      }
       const isInclude = trimmedLine.startsWith("!");
       const pattern = isInclude ? trimmedLine.substring(1) : trimmedLine;
       const isFolder = pattern.includes("/");
@@ -261,21 +274,31 @@ var GitignoreExplorerPlugin = class extends import_obsidian.Plugin {
   }
   shouldShowItem(path, isFile, isFolder, rules) {
     let defaultVisibility = true;
+    console.log(`
+[DEBUG] V\xE9rification du fichier: ${path}`);
+    console.log(`[DEBUG] Type: ${isFile ? "Fichier" : "Dossier"}`);
     for (const rule of rules) {
       const regex = new RegExp(rule.pattern);
       const matches = regex.test(path);
+      console.log(`[DEBUG] R\xE8gle test\xE9e: ${rule.pattern}`);
+      console.log(`[DEBUG] Est une r\xE8gle d'inclusion: ${rule.isInclude}`);
+      console.log(`[DEBUG] Match: ${matches}`);
       if (matches) {
         if (!rule.isInclude) {
           if (isFile && !rule.isFolder || isFolder && rule.isFolder) {
+            console.log(`[DEBUG] \u27A1\uFE0F Le fichier sera masqu\xE9 par la r\xE8gle: ${rule.pattern}`);
             defaultVisibility = false;
           }
         } else {
           if (isFile && !rule.isFolder || isFolder && rule.isFolder) {
+            console.log(`[DEBUG] \u27A1\uFE0F Le fichier sera inclus par la r\xE8gle: ${rule.pattern}`);
             return true;
           }
         }
       }
     }
+    console.log(`[DEBUG] Visibilit\xE9 finale: ${defaultVisibility ? "Visible" : "Masqu\xE9"}
+`);
     return defaultVisibility;
   }
 };
